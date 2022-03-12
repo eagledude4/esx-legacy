@@ -251,169 +251,244 @@ function OpenArmoryMenu(station)
 end
 
 function OpenPoliceActionsMenu()
-	ESX.UI.Menu.CloseAll()
+  ESX.UI.Menu.CloseAll()
 
-	ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'police_actions', {
-		title    = 'Police',
-		align    = 'top-left',
-		elements = {
-			{label = _U('citizen_interaction'), value = 'citizen_interaction'},
-			{label = _U('vehicle_interaction'), value = 'vehicle_interaction'},
-			{label = _U('object_spawner'), value = 'object_spawner'}
-	}}, function(data, menu)
-		if data.current.value == 'citizen_interaction' then
-			local elements = {
-				{label = _U('id_card'), value = 'identity_card'},
-				{label = _U('search'), value = 'search'},
-				{label = _U('handcuff'), value = 'handcuff'},
-				{label = _U('drag'), value = 'drag'},
-				{label = _U('put_in_vehicle'), value = 'put_in_vehicle'},
-				{label = _U('out_the_vehicle'), value = 'out_the_vehicle'},
-				{label = _U('fine'), value = 'fine'},
-				{label = _U('unpaid_bills'), value = 'unpaid_bills'}
-			}
+  local elements = {}
 
-			if Config.EnableLicenses then
-				table.insert(elements, {label = _U('license_check'), value = 'license'})
-			end
+  if not IsPedInAnyVehicle(PlayerPedId(), false) then
+    table.insert(elements, {label = _U('object_spawner'),		value = 'object_spawner'})
 
-			ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'citizen_interaction', {
-				title    = _U('citizen_interaction'),
-				align    = 'top-left',
-				elements = elements
-			}, function(data2, menu2)
-				local closestPlayer, closestDistance = ESX.Game.GetClosestPlayer()
-				if closestPlayer ~= -1 and closestDistance <= 3.0 then
-					local action = data2.current.value
+    local otherPlayer = getAnyClosestPlayer()
+    if otherPlayer ~= nil then
+      table.insert(elements, {label = _U('player_interaction'),	value = 'player_interaction'})
+    end
 
-					if action == 'identity_card' then
-						OpenIdentityCardMenu(closestPlayer)
-					elseif action == 'search' then
-						OpenBodySearchMenu(closestPlayer)
-					elseif action == 'handcuff' then
-						TriggerServerEvent('esx_policejob:handcuff', GetPlayerServerId(closestPlayer))
-					elseif action == 'drag' then
-						TriggerServerEvent('esx_policejob:drag', GetPlayerServerId(closestPlayer))
-					elseif action == 'put_in_vehicle' then
-						TriggerServerEvent('esx_policejob:putInVehicle', GetPlayerServerId(closestPlayer))
-					elseif action == 'out_the_vehicle' then
-						TriggerServerEvent('esx_policejob:OutVehicle', GetPlayerServerId(closestPlayer))
-					elseif action == 'fine' then
-						OpenFineMenu(closestPlayer)
-					elseif action == 'license' then
-						ShowPlayerLicense(closestPlayer)
-					elseif action == 'unpaid_bills' then
-						OpenUnpaidBillsMenu(closestPlayer)
-					end
-				else
-					ESX.ShowNotification(_U('no_players_nearby'))
-				end
-			end, function(data2, menu2)
-				menu2.close()
-			end)
-		elseif data.current.value == 'vehicle_interaction' then
-			local elements  = {}
-			local playerPed = PlayerPedId()
-			local vehicle = ESX.Game.GetVehicleInDirection()
+    local otherPed = getAnyClosestPed()
+    if otherPed ~= nil then
+      table.insert(elements, {label = _U('PISMenu'),	value = 'pis_menu'})
+    end
 
-			if DoesEntityExist(vehicle) then
-				table.insert(elements, {label = _U('vehicle_info'), value = 'vehicle_infos'})
-				table.insert(elements, {label = _U('pick_lock'), value = 'hijack_vehicle'})
-				table.insert(elements, {label = _U('impound'), value = 'impound'})
-			end
+    local driver = getClosestDriver()
+    if driver ~= nil then
+      table.insert(elements, {label = _U('PISMenu'),	value = 'pis_menu_traffic'})
+    end
 
-			table.insert(elements, {label = _U('search_database'), value = 'search_database'})
+    table.insert(elements, {label = _U('PIScallmenu'), value = 'PIScallmenu'})
+    table.insert(elements, {label = _U('PIScall'), value = 'PIScall'})
 
-			ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'vehicle_interaction', {
-				title    = _U('vehicle_interaction'),
-				align    = 'top-left',
-				elements = elements
-			}, function(data2, menu2)
-				local coords  = GetEntityCoords(playerPed)
-				vehicle = ESX.Game.GetVehicleInDirection()
-				action  = data2.current.value
+    local vehicle   = ESX.Game.GetVehicleInDirection()
+    if vehicle ~= nil then
+      table.insert(elements, {label = _U('vehicle_interaction'),	value = 'vehicle_interaction'})
+    end
+  else
+    if IsPedInAnyPoliceVehicle(playerPed) then
+      table.insert(elements, {label = _U('search_database'), value = 'search_database'})
+      table.insert(elements, {label = _U('speed_cam'),	value = 'speed_cam'})
+      table.insert(elements, {label = _U('PISMenu'),	value = 'pis_menu'})
+      table.insert(elements, {label = _U('mimic'), value = 'mimic'})
+      table.insert(elements, {label = _U('PIScallmenu'), value = 'PIScallmenu'})
+      table.insert(elements, {label = _U('PIScall'), value = 'PIScall'})
+    end
+  end
 
-				if action == 'search_database' then
-					LookupVehicle()
-				elseif DoesEntityExist(vehicle) then
-					if action == 'vehicle_infos' then
-						local vehicleData = ESX.Game.GetVehicleProperties(vehicle)
-						OpenVehicleInfosMenu(vehicleData)
-					elseif action == 'hijack_vehicle' then
-						if IsAnyVehicleNearPoint(coords.x, coords.y, coords.z, 3.0) then
-							TaskStartScenarioInPlace(playerPed, 'WORLD_HUMAN_WELDING', 0, true)
-							Wait(20000)
-							ClearPedTasksImmediately(playerPed)
+  ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'police_actions',
+  {
+    title    = 'Police',
+    align    = 'bottom-right',
+    elements = elements
+  }, function(data, menu)
+    if data.current.value == 'pis_menu' then
+      ESX.UI.Menu.CloseAll()
+      TriggerEvent('PISMenu')
+    elseif data.current.value == 'mimic' then
+      TriggerEvent('PISmimic')
+      ESX.UI.Menu.CloseAll()
+    elseif data.current.value == 'PIScallmenu' then
+      TriggerEvent('PIScallmenu')
+      ESX.UI.Menu.CloseAll()
+    elseif data.current.value == 'PIScall' then
+      TriggerEvent('PIScall')
+      ESX.UI.Menu.CloseAll()
+    elseif data.current.value == 'pis_menu_traffic' then
+      ESX.UI.Menu.CloseAll()
+      TriggerEvent('PIStraffic')
+    elseif data.current.value == 'player_interaction' then
+      local elements = {
+        {label = _U('id_card'),			value = 'identity_card'},
+        {label = _U('search'),			value = 'body_search'},
+        {label = _U('handcuff'),		value = 'handcuff'},
+        {label = _U('drag'),			value = 'drag'},
+        {label = _U('put_in_vehicle'),	value = 'put_in_vehicle'},
+        {label = _U('out_the_vehicle'),	value = 'out_the_vehicle'},
+        {label = _U('fine'),			value = 'fine'},
+        {label = _U('unpaid_bills'),	value = 'unpaid_bills'}
+      }
 
-							SetVehicleDoorsLocked(vehicle, 1)
-							SetVehicleDoorsLockedForAllPlayers(vehicle, false)
-							ESX.ShowNotification(_U('vehicle_unlocked'))
-						end
-					elseif action == 'impound' then
-						-- is the script busy?
-						if currentTask.busy then
-							return
-						end
+      if Config.EnableLicenses then
+        table.insert(elements, { label = _U('license_check'), value = 'license' })
+      end
 
-						ESX.ShowHelpNotification(_U('impound_prompt'))
-						TaskStartScenarioInPlace(playerPed, 'CODE_HUMAN_MEDIC_TEND_TO_DEAD', 0, true)
+      ESX.UI.Menu.Open(
+      'default', GetCurrentResourceName(), 'player_interaction',
+      {
+        title    = _U('player_interaction'),
+        align    = 'bottom-right',
+        elements = elements
+      }, function(data2, menu2)
+        local closestPlayer, closestDistance = ESX.Game.GetClosestPlayer()
+        if closestPlayer ~= -1 and closestDistance <= 3.0 then
+          local action = data2.current.value
 
-						currentTask.busy = true
-						currentTask.task = ESX.SetTimeout(10000, function()
-							ClearPedTasks(playerPed)
-							ImpoundVehicle(vehicle)
-							Wait(100) -- sleep the entire script to let stuff sink back to reality
-						end)
+          if action == 'identity_card' then
+            OpenIdentityCardMenu(closestPlayer)
+          elseif action == 'body_search' then
+            TriggerServerEvent('esx_policejob:message', GetPlayerServerId(closestPlayer), _U('being_searched'))
+            OpenBodySearchMenu(closestPlayer)
+          elseif action == 'handcuff' then
+            TriggerServerEvent('esx_policejob:handcuff', GetPlayerServerId(closestPlayer))
+          elseif action == 'drag' then
+            TriggerServerEvent('esx_policejob:drag', GetPlayerServerId(closestPlayer))
+          elseif action == 'put_in_vehicle' then
+            TriggerServerEvent('esx_policejob:putInVehicle', GetPlayerServerId(closestPlayer))
+          elseif action == 'out_the_vehicle' then
+            TriggerServerEvent('esx_policejob:OutVehicle', GetPlayerServerId(closestPlayer))
+          elseif action == 'fine' then
+            OpenFineMenu(closestPlayer)
+          elseif action == 'license' then
+            ShowPlayerLicense(closestPlayer)
+          elseif action == 'unpaid_bills' then
+            OpenUnpaidBillsMenu(closestPlayer)
+          end
+        else
+          ESX.ShowNotification(_U('no_players_nearby'))
+        end
+      end, function(data2, menu2)
+        menu2.close()
+      end)
+    elseif data.current.value == 'speed_cam' then
+      TriggerEvent('esx_speedradar:GetFlashMenu', 1)
+    elseif data.current.value == 'search_database' then
+      LookupVehicle()
+    elseif data.current.value == 'vehicle_interaction' then
+      local elements  = {}
+      local coords    = GetEntityCoords(playerPed)
+      local vehicle   = ESX.Game.GetVehicleInDirection()
 
-						-- keep track of that vehicle!
-						CreateThread(function()
-							while currentTask.busy do
-								Wait(1000)
+      if DoesEntityExist(vehicle) then -- this is a double check
+        table.insert(elements, {label = _U('vehicle_info'),	value = 'vehicle_infos'})
+        table.insert(elements, {label = _U('pick_lock'),	value = 'pick_lock'})
+        table.insert(elements, {label = _U('call_tow'),	value = 'call_tow'})
+        --table.insert(elements, {label = _U('impound'),		value = 'impound'})
+      end
 
-								vehicle = GetClosestVehicle(coords.x, coords.y, coords.z, 3.0, 0, 71)
-								if not DoesEntityExist(vehicle) and currentTask.busy then
-									ESX.ShowNotification(_U('impound_canceled_moved'))
-									ESX.ClearTimeout(currentTask.task)
-									ClearPedTasks(playerPed)
-									currentTask.busy = false
-									break
-								end
-							end
-						end)
-					end
-				else
-					ESX.ShowNotification(_U('no_vehicles_nearby'))
-				end
+      ESX.UI.Menu.Open(
+      'default', GetCurrentResourceName(), 'vehicle_interaction',
+      {
+        title    = _U('vehicle_interaction'),
+        align    = 'bottom-right',
+        elements = elements
+      }, function(data2, menu2)
+        coords  = GetEntityCoords(playerPed)
+        vehicle = ESX.Game.GetVehicleInDirection()
+        action  = data2.current.value
 
-			end, function(data2, menu2)
-				menu2.close()
-			end)
-		elseif data.current.value == 'object_spawner' then
-			ESX.UI.Menu.Open('default', GetCurrentResourceName(), 'citizen_interaction', {
-				title    = _U('traffic_interaction'),
-				align    = 'top-left',
-				elements = {
-					{label = _U('cone'), model = 'prop_roadcone02a'},
-					{label = _U('barrier'), model = 'prop_barrier_work05'},
-					{label = _U('spikestrips'), model = 'p_ld_stinger_s'},
-					{label = _U('box'), model = 'prop_boxpile_07d'},
-					{label = _U('cash'), model = 'hei_prop_cash_crate_half_full'}
-			}}, function(data2, menu2)
-				local playerPed = PlayerPedId()
-				local coords, forward = GetEntityCoords(playerPed), GetEntityForwardVector(playerPed)
-				local objectCoords = (coords + forward * 1.0)
+        if DoesEntityExist(vehicle) then
+          local vehicleData = ESX.Game.GetVehicleProperties(vehicle)
+          if action == 'vehicle_infos' then
+            OpenVehicleInfosMenu(vehicleData)
+          elseif action == 'call_tow' then
+            TriggerEvent('PIStow')
+          elseif action == 'pick_lock' then
+            if IsAnyVehicleNearPoint(coords.x, coords.y, coords.z, 3.0) then
+              TaskStartScenarioInPlace(playerPed, "WORLD_HUMAN_WELDING", 0, true)
+              Citizen.Wait(20000)
+              ClearPedTasksImmediately(playerPed)
+              SetVehicleDoorsLocked(vehicle, 1)
+              SetVehicleDoorsLockedForAllPlayers(vehicle, false)
+              ESX.ShowNotification(_U('vehicle_unlocked'))
+            end
+          elseif action == 'impound' then
 
-				ESX.Game.SpawnObject(data2.current.model, objectCoords, function(obj)
-					SetEntityHeading(obj, GetEntityHeading(playerPed))
-					PlaceObjectOnGroundProperly(obj)
-				end)
-			end, function(data2, menu2)
-				menu2.close()
-			end)
-		end
-	end, function(data, menu)
-		menu.close()
-	end)
+            -- is the script busy?
+            if CurrentTask.Busy then
+              return
+            end
+
+            ESX.ShowHelpNotification(_U('impound_prompt'))
+
+            TaskStartScenarioInPlace(playerPed, 'CODE_HUMAN_MEDIC_TEND_TO_DEAD', 0, true)
+
+            CurrentTask.Busy = true
+            CurrentTask.Task = ESX.SetTimeout(10000, function()
+              ClearPedTasks(playerPed)
+              ImpoundVehicle(vehicle)
+              Citizen.Wait(100) -- sleep the entire script to let stuff sink back to reality
+            end)
+
+            -- keep track of that vehicle!
+            Citizen.CreateThread(function()
+              while CurrentTask.Busy do
+                Citizen.Wait(1000)
+
+                vehicle = GetClosestVehicle(coords.x, coords.y, coords.z, 3.0, 0, 71)
+                if not DoesEntityExist(vehicle) and CurrentTask.Busy then
+                  ESX.ShowNotification(_U('impound_canceled_moved'))
+                  ESX.ClearTimeout(CurrentTask.Task)
+                  ClearPedTasks(playerPed)
+                  CurrentTask.Busy = false
+                  break
+                end
+              end
+            end)
+          end
+        else
+          ESX.ShowNotification(_U('no_vehicles_nearby'))
+        end
+
+      end, function(data2, menu2)
+        menu2.close()
+      end)
+    elseif data.current.value == 'object_spawner' then
+      ESX.UI.Menu.Open(
+      'default', GetCurrentResourceName(), 'object_spawner',
+      {
+        title    = _U('object_spawner'),
+        align    = 'bottom-right',
+        elements = {
+          {label = _U('cone'),		value = 'prop_roadcone02a'},
+          {label = _U('barrier'),		value = 'prop_barrier_work05'},
+          {label = _U('spikestrips'),	value = 'p_ld_stinger_s'},
+        }
+      }, function(data2, menu2)
+        local model     = data2.current.value
+        local coords    = GetEntityCoords(playerPed)
+        local forward   = GetEntityForwardVector(playerPed)
+        local x, y, z   = table.unpack(coords + forward * 1.0)
+
+        if model == 'prop_roadcone02a' then
+          z = z - 2.0
+        end
+
+        ESX.Game.SpawnObject(model, {
+          x = x,
+          y = y,
+          z = z
+        }, function(obj)
+          SetEntityHeading(obj, GetEntityHeading(playerPed))
+          PlaceObjectOnGroundProperly(obj)
+        end)
+
+      end, function(data2, menu2)
+        menu2.close()
+      end)
+    elseif data.current.value == 'PIS' then
+      TriggerEvent('PISMenu')
+      ESX.UI.Menu.CloseAll()
+    end
+
+  end, function(data, menu)
+    menu.close()
+  end)
 end
 
 function OpenIdentityCardMenu(player)

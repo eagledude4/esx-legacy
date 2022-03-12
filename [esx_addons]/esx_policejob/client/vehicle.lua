@@ -123,7 +123,7 @@ function StoreNearbyVehicle(playerCoords)
 	if next(vehicles) then
 		for i = 1, #vehicles do
 			local vehicle = vehicles[i]
-			
+
 			-- Make sure the vehicle we're saving is empty, or else it wont be deleted
 			if GetVehicleNumberOfPassengers(vehicle) == 0 and IsVehicleSeatFree(vehicle, -1) then
 				local plate = ESX.Math.Trim(GetVehicleNumberPlateText(vehicle))
@@ -286,6 +286,7 @@ function OpenShopMenu(elements, restoreCoords, shopCoords)
 	end)
 end
 
+-- Disable Vehicle Pickups
 Citizen.CreateThread(function()
 	while true do Citizen.Wait(100)
 		if IsPedInAnyPoliceVehicle(GetPlayerPed(-1), -1) or IsPedInAnyHeli(GetPlayerPed(-1)) then
