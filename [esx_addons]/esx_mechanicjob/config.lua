@@ -4,7 +4,7 @@ Config.Locale                     = 'en'
 Config.DrawDistance               = 10.0 -- How close you need to be in order for the markers to be drawn (in GTA units).
 Config.MaxInService               = -1
 Config.EnablePlayerManagement     = true -- Enable society managing.
-Config.EnableSocietyOwnedVehicles = false
+Config.EnableSocietyOwnedVehicles = true
 
 Config.NPCSpawnDistance           = 500.0
 Config.NPCNextToDistance          = 25.0
@@ -20,6 +20,26 @@ Config.Vehicles = {
 	'buffalo',
 	'sultan',
 	'baller3'
+}
+
+Config.CarNames = {
+  'carscrap1', -- crap Burrito
+  'carscrap3', -- Scrap Peyote
+  'carscrap4' -- Scrap Rancher
+}
+
+Config.Rubbish = {
+  'prop_rub_carpart_02',
+  'prop_rub_carpart_03',
+  'prop_rub_carpart_04',
+  'prop_rub_carpart_05'
+}
+
+Config.CarSpawns = {
+  SpawnPoints = {
+    {coords = vector3(1095.65, 3597.92, 31.90), heading = 70.0, radius = 6.0 },
+    {coords = vector3(1050.54, 3577.44, 33.35), heading = 70.0, radius = 6.0 }
+  }
 }
 
 Config.Zones = {

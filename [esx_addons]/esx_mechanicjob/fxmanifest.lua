@@ -19,7 +19,8 @@ client_scripts {
 	'locales/pl.lua',
 	'locales/nl.lua',
 	'config.lua',
-	'client/main.lua'
+	'client/main.lua',
+	'client/restore_cars.lua'
 }
 
 server_scripts {
@@ -33,7 +34,8 @@ server_scripts {
 	'locales/pl.lua',
 	'locales/nl.lua',
 	'config.lua',
-	'server/main.lua'
+	'server/main.lua',
+	'server/restore_cars.lua'
 }
 
 dependencies {
